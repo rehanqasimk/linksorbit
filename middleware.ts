@@ -4,24 +4,53 @@ import { getToken } from 'next-auth/jwt';
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
-  const isAuthPage = request.nextUrl.pathname.startsWith('/auth');
-
-  // If trying to access auth pages while logged in, redirect to dashboard
-  if (isAuthPage && token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  const pathname = request.nextUrl.pathname;
+  
+  // Handle authentication pages (login/register)
+  if (pathname.startsWith('/auth')) {
+    if (token) {
+      // If already logged in, redirect based on role
+      const role = (token as any).role;
+      const redirectUrl = role === 'ADMIN' ? '/admin' : '/dashboard';
+      return NextResponse.redirect(new URL(redirectUrl, request.url));
+    }
+    return NextResponse.next();
   }
 
-  // If trying to access protected pages while logged out, redirect to login
-  if (!isAuthPage && !token && request.nextUrl.pathname !== '/') {
+  // Require authentication for all other routes
+  if (!token) {
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
-  // Redirect root to dashboard if logged in, or login if logged out
-  if (request.nextUrl.pathname === '/') {
-    if (token) {
+  const role = (token as any).role;
+
+  // Handle root path redirects
+  if (pathname === '/') {
+    const redirectUrl = role === 'ADMIN' ? '/admin' : '/dashboard';
+    return NextResponse.redirect(new URL(redirectUrl, request.url));
+  }
+
+  // Protect admin routes
+  if (pathname.startsWith('/admin')) {
+    if (role !== 'ADMIN') {
       return NextResponse.redirect(new URL('/dashboard', request.url));
-    } else {
+    }
+  }
+
+  // Protect user routes from admin access
+  if (pathname.startsWith('/dashboard') && role === 'ADMIN') {
+    return NextResponse.redirect(new URL('/admin', request.url));
+  }
+
+  // Protect admin routes
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (!token) {
       return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+    
+    const role = (token as any).role;
+    if (role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
 

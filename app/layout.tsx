@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description: "LinkOrbits publisher dashboard for managing affiliate programs",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;

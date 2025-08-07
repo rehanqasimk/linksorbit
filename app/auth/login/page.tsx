@@ -39,7 +39,16 @@ export default function LoginPage() {
         return;
       }
 
-      router.push('/dashboard'); // Redirect to dashboard on success
+      // Check user role from session
+      const session = await fetch('/api/auth/session');
+      const sessionData = await session.json();
+      
+      // Redirect based on role
+      if (sessionData?.user?.role === 'ADMIN') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
       router.refresh();
     } catch (error) {
       setError('An error occurred. Please try again.');

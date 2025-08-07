@@ -1,67 +1,58 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
-import { sendNewPublisherNotification } from '@/lib/email';
+import prisma from '../../../../lib/prisma';
+import bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
-
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const { email, password, name, website } = await req.json();
+    const body = await request.json();
+    const { name, email, password, website } = body;
 
     // Validate input
-    if (!email || !password || !name || !website) {
+    if (!name || !email || !password || !website) {
       return NextResponse.json(
-        { message: 'Missing required fields' },
+        { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    // Check for existing user
+    const existing = await prisma.publisher.findUnique({
       where: { email },
     });
 
-    if (existingUser) {
+    if (existing) {
       return NextResponse.json(
-        { message: 'User with this email already exists' },
+        { error: 'Email already registered' },
         { status: 400 }
       );
     }
 
-    // Hash password
+    // Create new publisher
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
-    const user = await prisma.user.create({
+    const publisher = await prisma.publisher.create({
       data: {
+        name,
         email,
         password: hashedPassword,
-        name,
         website,
-        status: 'PENDING', // All new users start with pending status
-        role: 'USER',
+        status: 'PENDING',
       },
     });
 
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
-
-    // Send notification email to admin
-    await sendNewPublisherNotification({
-      name: user.name,
-      email: user.email,
-      website: user.website,
-    });
+    const { password: _, ...publisherWithoutPassword } = publisher;
 
     return NextResponse.json(
-      { message: 'User registered successfully', user: userWithoutPassword },
+      {
+        success: true,
+        message: 'Registration successful. Waiting for admin approval.',
+        publisher: publisherWithoutPassword,
+      },
       { status: 201 }
     );
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(
-      { message: 'Error creating user' },
+      { error: 'Failed to register publisher' },
       { status: 500 }
     );
   }

@@ -395,9 +395,21 @@ export default function AdminDashboard() {
                               type="text"
                               value={publisher.siteId || ''}
                               placeholder="Enter Site ID"
-                              onChange={(e) => handleSiteIdUpdate(publisher.id, e.target.value)}
+                              onChange={(e) => {
+                                const updatedPublishers = publishers.map(p => 
+                                  p.id === publisher.id ? {...p, siteId: e.target.value} : p
+                                );
+                                setPublishers(updatedPublishers);
+                              }}
                               className="px-2 py-1 bg-gray-700 rounded text-sm text-white"
                             />
+                            <button
+                              onClick={() => handleSiteIdUpdate(publisher.id, publisher.siteId || '')}
+                              className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-sm text-white"
+                              title="Save Site ID"
+                            >
+                              Save
+                            </button>
                           </div>
                         ) : (
                           'N/A'

@@ -34,16 +34,4 @@ model User {
   updatedAt     DateTime   @updatedAt
 }
 
-model Publisher {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  website   String
-  status    String   @default("PENDING") // PENDING, ACTIVE, SUSPENDED
-  siteId    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 // Additional models will be added as we implement more features

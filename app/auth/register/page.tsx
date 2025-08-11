@@ -34,7 +34,7 @@ export default function RegisterPage() {
       }
 
       // Registration successful, redirect to login
-      router.push('/auth/login?registered=true');
+      router.push('/auth/success');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred during registration');
     } finally {

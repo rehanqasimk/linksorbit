@@ -7,16 +7,8 @@ import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (searchParams?.get('registered') === 'true') {
-      setSuccess('Registration successful! Please log in with your credentials.');
-    }
-  }, [searchParams]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -106,9 +98,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {success && (
-              <div className="text-green-600 text-sm">{success}</div>
-            )}
             {error && (
               <div className="text-red-600 text-sm">{error}</div>
             )}

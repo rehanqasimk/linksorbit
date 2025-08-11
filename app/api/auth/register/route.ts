@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     }
 
     // Check for existing user
-    const existing = await prisma.publisher.findUnique({
+    const existing = await prisma.user.findUnique({
       where: { email },
     });
 
@@ -27,9 +27,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create new publisher
+    // Create new user
     const hashedPassword = await bcrypt.hash(password, 10);
-    const publisher = await prisma.publisher.create({
+    const user = await prisma.user.create({
       data: {
         name,
         email,
@@ -39,13 +39,13 @@ export async function POST(request: Request) {
       },
     });
 
-    const { password: _, ...publisherWithoutPassword } = publisher;
+    const { password: _, ...userWithoutPassword } = user;
 
     return NextResponse.json(
       {
         success: true,
         message: 'Registration successful. Waiting for admin approval.',
-        publisher: publisherWithoutPassword,
+        user: userWithoutPassword,
       },
       { status: 201 }
     );

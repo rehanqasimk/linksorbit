@@ -50,6 +50,9 @@ export async function sendStatusUpdateEmail(
   name: string,
   status: 'ACTIVE' | 'SUSPENDED'
 ) {
+  // Set timeout to prevent hanging on SMTP operations
+  const timeout = 5000; // 5 seconds
+  
   try {
     // Determine if this is an approval from PENDING or a reactivation from SUSPENDED
     const isNewApproval = status === 'ACTIVE';
@@ -117,13 +120,25 @@ export async function sendStatusUpdateEmail(
         </div>
       `;
 
-    await transporter.sendMail({
+    // Create a promise that resolves or rejects based on a timeout
+    const emailPromise = transporter.sendMail({
       from: process.env.SMTP_FROM,
       to: email,
       subject,
       html: content,
     });
+    
+    // Set up a race between the email sending and a timeout
+    await Promise.race([
+      emailPromise,
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Email sending timed out')), timeout)
+      )
+    ]);
   } catch (error) {
     console.error('Error sending status update email:', error);
+    // Re-throw the error so the caller knows something went wrong
+    // but the API can still proceed if we're using the "fire and forget" approach
+    throw error;
   }
 }

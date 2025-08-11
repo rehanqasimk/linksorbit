@@ -27,6 +27,7 @@ export async function GET(request: Request) {
         email: true,
         website: true,
         status: true,
+        siteId: true,
         createdAt: true,
       },
     });

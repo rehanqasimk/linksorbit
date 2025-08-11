@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
 import { sendStatusUpdateEmail } from '@/lib/email';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 export async function PATCH(
   request: Request,
@@ -37,20 +35,21 @@ export async function PATCH(
       data: { status },
     });
 
-    // Send email notification
-    await sendStatusUpdateEmail(
+    // Send email notification without awaiting (fire and forget)
+    // This will make the API return faster
+    sendStatusUpdateEmail(
       publisher.email || '',
       publisher.name || 'Publisher',
       status
-    );
+    ).catch(err => {
+      console.error('Error sending email (background):', err);
+    });
     
     return NextResponse.json({ 
       message: 'Status updated successfully',
       previousStatus,
       currentStatus: status
     });
-
-    return NextResponse.json({ message: 'Status updated successfully' });
   } catch (error) {
     console.error('Error updating publisher status:', error);
     return NextResponse.json(

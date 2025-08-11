@@ -15,6 +15,57 @@ interface Publisher {
   createdAt: string;
 }
 
+interface ConfirmDialogProps {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText: string;
+  confirmVariant: 'green' | 'red';
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function ConfirmDialog({
+  isOpen,
+  title,
+  message,
+  confirmText,
+  cancelText,
+  confirmVariant,
+  onConfirm,
+  onCancel
+}: ConfirmDialogProps) {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+        <h3 className="text-xl font-semibold mb-4">{title}</h3>
+        <p className="text-gray-300 mb-6">{message}</p>
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-white"
+          >
+            {cancelText}
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`px-4 py-2 rounded text-white ${
+              confirmVariant === 'green' 
+                ? 'bg-green-600 hover:bg-green-700' 
+                : 'bg-red-600 hover:bg-red-700'
+            }`}
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const { data: session } = useSession();
   const router = useRouter();
@@ -22,6 +73,24 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'ACTIVE' | 'SUSPENDED'>('ALL');
+  const [notification, setNotification] = useState<{message: string; type: 'success' | 'error'} | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    cancelText: string;
+    confirmVariant: 'green' | 'red';
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    cancelText: 'Cancel',
+    confirmVariant: 'green',
+    onConfirm: () => {},
+  });
 
   if (!session) {
     return null; // Don't render anything while session is loading
@@ -52,7 +121,53 @@ export default function AdminDashboard() {
     }
   }
 
-  async function handleStatusUpdate(publisherId: string, newStatus: 'ACTIVE' | 'SUSPENDED') {
+  function showConfirmationDialog(publisherId: string, newStatus: 'ACTIVE' | 'SUSPENDED', publisher: Publisher) {
+    const isApproving = newStatus === 'ACTIVE';
+    const isDeclining = newStatus === 'SUSPENDED' && publisher.status === 'PENDING';
+    const isSuspending = newStatus === 'SUSPENDED' && publisher.status === 'ACTIVE';
+    
+    let title = '';
+    let message = '';
+    let confirmText = '';
+    let confirmVariant: 'green' | 'red' = 'green';
+    
+    if (isApproving && publisher.status === 'PENDING') {
+      title = 'Approve Publisher Account';
+      message = `Are you sure you want to approve ${publisher.name}'s account? They will receive an email notification and gain access to the platform.`;
+      confirmText = 'Approve';
+      confirmVariant = 'green';
+    } else if (isApproving && publisher.status === 'SUSPENDED') {
+      title = 'Reactivate Publisher Account';
+      message = `Are you sure you want to reactivate ${publisher.name}'s account? They will regain access to the platform.`;
+      confirmText = 'Reactivate';
+      confirmVariant = 'green';
+    } else if (isDeclining) {
+      title = 'Decline Publisher Account';
+      message = `Are you sure you want to decline ${publisher.name}'s account application? They will receive an email notification.`;
+      confirmText = 'Decline';
+      confirmVariant = 'red';
+    } else if (isSuspending) {
+      title = 'Suspend Publisher Account';
+      message = `Are you sure you want to suspend ${publisher.name}'s account? They will lose access to the platform.`;
+      confirmText = 'Suspend';
+      confirmVariant = 'red';
+    }
+    
+    setConfirmDialog({
+      isOpen: true,
+      title,
+      message,
+      confirmText,
+      cancelText: 'Cancel',
+      confirmVariant,
+      onConfirm: () => performStatusUpdate(publisherId, newStatus, publisher),
+    });
+  }
+
+  async function performStatusUpdate(publisherId: string, newStatus: 'ACTIVE' | 'SUSPENDED', publisher: Publisher) {
+    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+    setIsLoading(true);
+    
     try {
       const response = await fetch(`/api/admin/publishers/${publisherId}/status`, {
         method: 'PATCH',
@@ -64,11 +179,53 @@ export default function AdminDashboard() {
         throw new Error('Failed to update status');
       }
 
+      // Show success notification
+      const isApproval = newStatus === 'ACTIVE' && publisher.status === 'PENDING';
+      const isReactivation = newStatus === 'ACTIVE' && publisher.status === 'SUSPENDED';
+      const isDecline = newStatus === 'SUSPENDED' && publisher.status === 'PENDING';
+      const isSuspend = newStatus === 'SUSPENDED' && publisher.status === 'ACTIVE';
+      
+      let message = '';
+      
+      if (isApproval) message = `${publisher.name}'s account has been approved`;
+      else if (isReactivation) message = `${publisher.name}'s account has been reactivated`;
+      else if (isDecline) message = `${publisher.name}'s account has been declined`;
+      else if (isSuspend) message = `${publisher.name}'s account has been suspended`;
+      
+      setNotification({
+        message,
+        type: 'success'
+      });
+      
+      // Clear notification after 5 seconds
+      setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+
       // Refresh the publishers list
       fetchPublishers();
     } catch (error) {
       console.error('Error updating publisher status:', error);
+      setNotification({
+        message: 'Failed to update account status',
+        type: 'error'
+      });
+      
+      // Clear notification after 5 seconds
+      setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+    } finally {
+      setIsLoading(false);
     }
+  }
+
+  // Handler to initiate the confirmation dialog
+  function handleStatusUpdate(publisherId: string, newStatus: 'ACTIVE' | 'SUSPENDED') {
+    const publisher = publishers.find(pub => pub.id === publisherId);
+    if (!publisher) return;
+    
+    showConfirmationDialog(publisherId, newStatus, publisher);
   }
 
   if (isLoading) {
@@ -115,6 +272,34 @@ export default function AdminDashboard() {
             Logout
           </button>
         </div>
+        
+        {/* Notification */}
+        {notification && (
+          <div className={`p-4 rounded-md ${
+            notification.type === 'success' ? 'bg-green-800 text-green-100' : 'bg-red-800 text-red-100'
+          } flex justify-between items-center`}>
+            <div className="flex items-center">
+              {notification.type === 'success' ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              )}
+              <span>{notification.message}</span>
+            </div>
+            <button 
+              onClick={() => setNotification(null)}
+              className="text-white ml-4"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         {/* Filters and Search */}
         <div className="flex justify-between items-center bg-gray-800 p-4 rounded-lg">
@@ -231,14 +416,22 @@ export default function AdminDashboard() {
                           <div className="flex space-x-2">
                             <button
                               onClick={() => handleStatusUpdate(publisher.id, 'ACTIVE')}
-                              className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm"
+                              className="flex items-center justify-center px-3 py-2 bg-green-600 hover:bg-green-700 rounded-md text-sm transition-colors duration-200 shadow-sm"
+                              title="Approve this publisher account"
                             >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
                               Approve
                             </button>
                             <button
                               onClick={() => handleStatusUpdate(publisher.id, 'SUSPENDED')}
-                              className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm"
+                              className="flex items-center justify-center px-3 py-2 bg-red-600 hover:bg-red-700 rounded-md text-sm transition-colors duration-200 shadow-sm"
+                              title="Decline this publisher application"
                             >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
                               Decline
                             </button>
                           </div>
@@ -246,16 +439,24 @@ export default function AdminDashboard() {
                         {publisher.status === 'ACTIVE' && (
                           <button
                             onClick={() => handleStatusUpdate(publisher.id, 'SUSPENDED')}
-                            className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm"
+                            className="flex items-center justify-center px-3 py-2 bg-red-600 hover:bg-red-700 rounded-md text-sm transition-colors duration-200 shadow-sm"
+                            title="Suspend this publisher account"
                           >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M13 10V3L4 14h7v7l9-11h-7z" clipRule="evenodd" />
+                            </svg>
                             Suspend
                           </button>
                         )}
                         {publisher.status === 'SUSPENDED' && (
                           <button
                             onClick={() => handleStatusUpdate(publisher.id, 'ACTIVE')}
-                            className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm"
+                            className="flex items-center justify-center px-3 py-2 bg-green-600 hover:bg-green-700 rounded-md text-sm transition-colors duration-200 shadow-sm"
+                            title="Reactivate this publisher account"
                           >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                            </svg>
                             Reactivate
                           </button>
                         )}
@@ -268,6 +469,18 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+      
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        cancelText={confirmDialog.cancelText}
+        confirmVariant={confirmDialog.confirmVariant}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

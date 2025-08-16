@@ -48,6 +48,7 @@ export const authOptions: AuthOptions = {
           name: user.name,
           role: user.role,
           status: user.status,
+          siteId: user.siteId,
         };
       },
     }),
@@ -57,13 +58,15 @@ export const authOptions: AuthOptions = {
       if (user) {
         token.role = user.role;
         token.status = user.status;
+        token.siteId = user.siteId;
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
-        session.user.role = token.role;
-        session.user.status = token.status;
+        session.user.role = token.role as any;
+        session.user.status = token.status as any;
+        session.user.siteId = token.siteId as string;
       }
       return session;
     },

@@ -10,6 +10,7 @@ import TopCountryByClick from '@/components/dashboard/TopCountryByClick';
 import WeeklyPerformance from '@/components/dashboard/WeeklyPerformance';
 import ProgramReport from '@/components/dashboard/ProgramReport';
 import MetricsCards from '@/components/dashboard/MetricsCards';
+import SiteIdCard from '@/components/dashboard/SiteIdCard';
 
 export default function Dashboard() {
   const { data: session } = useSession();
@@ -41,6 +42,9 @@ export default function Dashboard() {
 
         {/* Metrics Cards */}
         <MetricsCards />
+        
+        {/* Site ID Card (for publishers) */}
+        {session?.user?.role !== 'ADMIN' && <SiteIdCard />}
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-12 gap-6">

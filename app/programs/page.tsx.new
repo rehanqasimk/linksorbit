@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -65,9 +65,6 @@ export default function Programs() {
       }
       
       const data = await res.json();
-
-      console.log("data",data);
-      
       setPrograms(data.advertisers);
       setTotalPrograms(data.total);
       
@@ -147,20 +144,12 @@ export default function Programs() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-semibold">Programs</h1>
-          <div className="flex items-center space-x-6">
-            <nav className="flex space-x-6">
-              <Link href="/dashboard" className="text-white hover:text-gray-300">Dashboard</Link>
-              <Link href="/programs" className="text-white hover:text-gray-300 font-bold">Programs</Link>
-              <Link href="/reports" className="text-white hover:text-gray-300">Reports</Link>
-              <Link href="/incentives" className="text-white hover:text-gray-300">Incentives</Link>
-            </nav>
-            <button
-              onClick={() => signOut({ callbackUrl: '/auth/login' })}
-              className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white text-sm"
-            >
-              Logout
-            </button>
-          </div>
+          <nav className="flex space-x-6">
+            <Link href="/dashboard" className="text-white hover:text-gray-300">Dashboard</Link>
+            <Link href="/programs" className="text-white hover:text-gray-300 font-bold">Programs</Link>
+            <Link href="/reports" className="text-white hover:text-gray-300">Reports</Link>
+            <Link href="/incentives" className="text-white hover:text-gray-300">Incentives</Link>
+          </nav>
         </div>
 
         {/* Tab Navigation */}

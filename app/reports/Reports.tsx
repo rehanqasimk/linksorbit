@@ -1,5 +1,7 @@
 "use client";
 import React, { useState } from 'react';
+import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 
 interface Commission {
   id: string;
@@ -82,9 +84,26 @@ const Reports: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] px-4 py-8">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-center">Commission Reports</h1>
+    <div className="min-h-screen bg-gray-900 text-white p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-semibold">Reports</h1>
+          <div className="flex items-center space-x-6">
+            <nav className="flex space-x-6">
+              <Link href="/dashboard" className="text-white hover:text-gray-300">Dashboard</Link>
+              <Link href="/programs" className="text-white hover:text-gray-300">Programs</Link>
+              <Link href="/reports" className="text-white hover:text-gray-300 font-bold">Reports</Link>
+              <Link href="/incentives" className="text-white hover:text-gray-300">Incentives</Link>
+            </nav>
+            <button
+              onClick={() => signOut({ callbackUrl: '/auth/login' })}
+              className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white text-sm"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
 
         <div className="flex justify-center mb-6 space-x-4">
           <button

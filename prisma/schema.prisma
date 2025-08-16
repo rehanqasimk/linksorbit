@@ -21,17 +21,54 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum ProgramRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
-  role      UserRole    @default(USER)
-  status    UserStatus   @default(PENDING)
-  siteId    String?  @unique
-  website   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String           @id @default(cuid())
+  email          String           @unique
+  password       String
+  name           String?
+  role           UserRole         @default(USER)
+  status         UserStatus       @default(PENDING)
+  siteId         String?          @unique
+  website        String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  programRequests ProgramRequest[]
+}
+
+model Program {
+  id             String           @id
+  name           String
+  description    String?
+  image          String?
+  domain         String?
+  url            String?
+  payPerLead     Float            @default(0)
+  payPerSale     Float            @default(0)
+  currency       String           @default("EUR")
+  categories     String[]
+  countries      String[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  programRequests ProgramRequest[]
+}
+
+model ProgramRequest {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id])
+  programId String
+  program   Program            @relation(fields: [programId], references: [id])
+  status    ProgramRequestStatus @default(PENDING)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@unique([userId, programId])
 }
 
 // Additional models will be added as we implement more features

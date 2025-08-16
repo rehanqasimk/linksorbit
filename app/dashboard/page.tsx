@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useState } from 'react';
 import Link from 'next/link';
 import AccountOverview from '@/components/dashboard/AccountOverview';
@@ -32,12 +32,20 @@ export default function Dashboard() {
               className="mt-2 bg-gray-800 text-white px-3 py-1 rounded border border-gray-700"
             />
           </div>
-          <nav className="flex space-x-6">
-            <Link href="/dashboard" className="text-white hover:text-gray-300">Dashboard</Link>
-            <Link href="/programs" className="text-white hover:text-gray-300">Programs</Link>
-            <Link href="/reports" className="text-white hover:text-gray-300">Reports</Link>
-            <Link href="/payments" className="text-white hover:text-gray-300">Payments</Link>
-          </nav>
+          <div className="flex items-center space-x-6">
+            <nav className="flex space-x-6">
+              <Link href="/dashboard" className="text-white hover:text-gray-300">Dashboard</Link>
+              <Link href="/programs" className="text-white hover:text-gray-300">Programs</Link>
+              <Link href="/reports" className="text-white hover:text-gray-300">Reports</Link>
+              <Link href="/payments" className="text-white hover:text-gray-300">Payments</Link>
+            </nav>
+            <button
+              onClick={() => signOut({ callbackUrl: '/auth/login' })}
+              className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white text-sm"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         {/* Metrics Cards */}

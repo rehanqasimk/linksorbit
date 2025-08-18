@@ -36,12 +36,12 @@ export default function AdminLayout({
               >
                 Dashboard
               </Link>
-              <Link 
+              {/* <Link 
                 href="/admin/publishers" 
                 className={`text-white hover:text-gray-300 ${currentPage === 'publishers' ? 'font-bold' : ''}`}
               >
                 Publishers
-              </Link>
+              </Link> */}
               <Link 
                 href="/admin/program-requests" 
                 className={`text-white hover:text-gray-300 ${currentPage === 'program-requests' ? 'font-bold' : ''}`}

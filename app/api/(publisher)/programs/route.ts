@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../auth/[...nextauth]/auth';
+import { authOptions } from '../../auth/[...nextauth]/auth';
 import prisma from '@/lib/prisma';
 
 export async function GET(req: Request) {
@@ -21,8 +21,6 @@ export async function GET(req: Request) {
       where: { email: session.user.email as string },
     });
 
-    console.log("😂 user", user);
-
     if (!user || !user.siteId) {
       return NextResponse.json({ error: 'User has no associated site ID' }, { status: 400 });
     }
@@ -33,8 +31,6 @@ export async function GET(req: Request) {
 
     // Make request to Yieldkit API
     const yieldkitUrl = `https://api.yieldkit.com/v1/advertiser?api_key=${apiKey}&api_secret=${apiSecret}&site_id=${user.siteId}&country=${country}&page_size=${pageSize}&page=${page}&format=json`;
-
-    console.log("😂 yieldkitUrl:", yieldkitUrl);
 
     const response = await fetch(yieldkitUrl, {
       headers: {

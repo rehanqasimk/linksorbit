@@ -15,14 +15,11 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [notification, setNotification] = useState<{message: string; type: 'success' | 'error'} | null>(null);
   
-  // Determine current page from pathname
   const currentPage = pathname === '/admin' 
     ? 'dashboard' 
     : pathname.includes('/program-requests') 
       ? 'program-requests' 
-      : pathname.includes('/publishers') 
-        ? 'publishers' 
-        : '';
+      : '';
   
   return (
     <SessionProvider>
@@ -35,7 +32,6 @@ export default function AdminLayout({
                 <h1 className="text-2xl font-semibold">
                   {currentPage === 'dashboard' && 'Admin Dashboard'}
                   {currentPage === 'program-requests' && 'Program Join Requests'}
-                  {currentPage === 'publishers' && 'Publishers'}
                 </h1>
                 <nav className="flex space-x-6 mt-2">
                   <Link 
@@ -49,12 +45,6 @@ export default function AdminLayout({
                     className={`text-white ${currentPage === 'program-requests' ? 'text-indigo-400' : 'hover:text-gray-300'}`}
                   >
                     Program Requests
-                  </Link>
-                  <Link 
-                    href="/admin/publishers" 
-                    className={`text-white ${currentPage === 'publishers' ? 'text-indigo-400' : 'hover:text-gray-300'}`}
-                  >
-                    Publishers
                   </Link>
                 </nav>
               </div>

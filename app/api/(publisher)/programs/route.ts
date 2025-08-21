@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const page = url.searchParams.get('page') || '1';
     const pageSize = url.searchParams.get('pageSize') || '10';
-    const country = url.searchParams.get('country') || 'DE';
+    let country = url.searchParams.get('country') || 'ALL';
 
     // Get user to retrieve their siteId
     const user = await prisma.user.findUnique({
@@ -30,7 +30,13 @@ export async function GET(req: Request) {
     const apiSecret = process.env.API_SECRET
 
     // Make request to Yieldkit API
-    const yieldkitUrl = `https://api.yieldkit.com/v1/advertiser?api_key=${apiKey}&api_secret=${apiSecret}&site_id=${user.siteId}&country=${country}&page_size=${pageSize}&page=${page}&format=json`;
+    // If country is 'ALL', don't include the country parameter
+    let yieldkitUrl = `https://api.yieldkit.com/v1/advertiser?api_key=${apiKey}&api_secret=${apiSecret}&site_id=${user.siteId}&page_size=${pageSize}&page=${page}&format=json`;
+    
+    // Only add country parameter if it's not 'ALL'
+    if (country !== 'ALL') {
+      yieldkitUrl += `&country=${country}`;
+    }
 
     const response = await fetch(yieldkitUrl, {
       headers: {
@@ -44,6 +50,9 @@ export async function GET(req: Request) {
     }
 
     const data = await response.json();
+
+    console.log("data",data);
+    
 
     // Get user's program requests to mark joined programs
     const userProgramRequests = await prisma.programRequest.findMany({

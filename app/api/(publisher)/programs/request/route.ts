@@ -67,7 +67,16 @@ export async function POST(req: Request) {
           const data = await response.json();
           
           if (data.advertisers && data.advertisers.length > 0) {
-            const advertiser = data.advertisers[0];
+            // Look for the exact matching program by ID
+            const advertiser = data.advertisers.find((adv: any) => adv.id === programId) || data.advertisers[0];
+            
+            // Log which program we're using
+            console.log("Found program:", advertiser.id, advertiser.name);
+            
+            // Double check if this is the right program
+            if (advertiser.id !== programId) {
+              console.warn(`Warning: API returned program ${advertiser.id} but we requested ${programId}`);
+            }
             
             // Update the program with full details
             await prisma.program.update({

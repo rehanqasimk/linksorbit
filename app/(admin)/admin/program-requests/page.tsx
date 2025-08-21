@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import Image from 'next/image';
+import SafeImage from '@/components/SafeImage';
 
 interface User {
   id: string;
@@ -40,12 +40,23 @@ export default function ProgramRequests() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
+  const [publisherFilter, setPublisherFilter] = useState<string>('');
+  const [debouncedPublisherFilter, setDebouncedPublisherFilter] = useState<string>('');
   const [actionStatus, setActionStatus] = useState<{[key: string]: string}>({});
   const [notification, setNotification] = useState<{message: string; type: 'success' | 'error'} | null>(null);
 
   useEffect(() => {
     fetchProgramRequests();
   }, [filter]);
+  
+  // Apply debouncing to the publisher filter
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPublisherFilter(publisherFilter);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [publisherFilter]);
 
   const fetchProgramRequests = async () => {
     try {
@@ -58,6 +69,8 @@ export default function ProgramRequests() {
       }
       
       const data = await response.json();
+      console.log("🔴 data" ,data);
+      
       setProgramRequests(data.programRequests);
     } catch (err: any) {
       console.error('Error fetching program requests:', err);
@@ -143,8 +156,24 @@ export default function ProgramRequests() {
   };
 
   const filteredRequests = programRequests.filter(request => {
-    if (filter === 'ALL') return true;
-    return request.status === filter;
+    // First apply status filter
+    if (filter !== 'ALL' && request.status !== filter) {
+      return false;
+    }
+    
+    // Then apply publisher filter if it exists
+    if (debouncedPublisherFilter.trim() !== '') {
+      const userName = request.user.name?.toLowerCase() || '';
+      const userEmail = request.user.email.toLowerCase();
+      const siteId = request.user.siteId?.toLowerCase() || '';
+      const searchTerm = debouncedPublisherFilter.toLowerCase();
+      
+      return userName.includes(searchTerm) || 
+             userEmail.includes(searchTerm) || 
+             siteId.includes(searchTerm);
+    }
+    
+    return true;
   });
 
   if (!session || session.user?.role !== 'ADMIN') {
@@ -186,6 +215,53 @@ export default function ProgramRequests() {
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
           </button>
+        </div>
+      )}
+
+      {/* Publisher Filter */}
+      <div className="mb-6">
+        <div className="flex items-center space-x-2">
+          <div className="relative flex-grow">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <svg className="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-700 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Filter by publisher name or email..."
+              value={publisherFilter}
+              onChange={(e) => setPublisherFilter(e.target.value)}
+            />
+          </div>
+          {publisherFilter && (
+            <button
+              className="p-2 text-gray-400 hover:text-white"
+              onClick={() => setPublisherFilter('')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Filter indicator when publisher filter is active */}
+      {debouncedPublisherFilter && (
+        <div className="mt-4 mb-2">
+          <span className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-indigo-900 text-indigo-300">
+            Filtering by: {debouncedPublisherFilter}
+            <button 
+              onClick={() => setPublisherFilter('')}
+              className="ml-2 text-indigo-300 hover:text-white"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </span>
         </div>
       )}
 
@@ -242,7 +318,22 @@ export default function ProgramRequests() {
           </div>
         ) : filteredRequests.length === 0 ? (
           <div className="p-8 text-center text-gray-400">
-            No {filter === 'ALL' ? '' : filter.toLowerCase()} program requests found.
+            {debouncedPublisherFilter 
+              ? `No ${filter === 'ALL' ? '' : filter.toLowerCase()} program requests found for "${debouncedPublisherFilter}".` 
+              : `No ${filter === 'ALL' ? '' : filter.toLowerCase()} program requests found.`}
+            {(debouncedPublisherFilter || filter !== 'ALL') && (
+              <div className="mt-2">
+                <button 
+                  onClick={() => {
+                    setPublisherFilter('');
+                    setFilter('ALL');
+                  }}
+                  className="text-indigo-400 hover:text-indigo-300 text-sm underline"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -296,7 +387,7 @@ export default function ProgramRequests() {
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
                           {request.program.image ? (
-                            <Image 
+                            <SafeImage 
                               src={request.program.image} 
                               alt={request.program.name} 
                               width={40} 

@@ -69,7 +69,6 @@ export default function ProgramRequests() {
       }
       
       const data = await response.json();
-      console.log("🔴 data" ,data);
       
       setProgramRequests(data.programRequests);
     } catch (err: any) {

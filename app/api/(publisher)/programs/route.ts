@@ -38,32 +38,70 @@ export async function GET(req: Request) {
       yieldkitUrl += `&country=${country}`;
     }
 
-    const response = await fetch(yieldkitUrl, {
-      headers: {
-        'accept': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      console.error('Yieldkit API error:', await response.text());
-      return NextResponse.json({ error: 'Failed to fetch programs from Yieldkit' }, { status: response.status });
-    }
-
-    const data = await response.json();
-
-    console.log("data",data);
+    console.log('Fetching from Yieldkit API:', yieldkitUrl);
+    const startTime = Date.now();
     
-
-    // Get user's program requests to mark joined programs
-    const userProgramRequests = await prisma.programRequest.findMany({
+    let data;
+    
+    try {
+      // Set a timeout of 15 seconds for the API call
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
+      const response = await fetch(yieldkitUrl, {
+        headers: {
+          'accept': 'application/json'
+        },
+        signal: controller.signal
+      });
+      
+      // Clear the timeout since the fetch completed
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        console.error('Yieldkit API error:', await response.text());
+        return NextResponse.json({ error: 'Failed to fetch programs from Yieldkit' }, { status: response.status });
+      }
+      
+      data = await response.json();
+      console.log(`Yieldkit API responded in ${Date.now() - startTime}ms`);
+    } catch (error: any) {
+      const errorTime = Date.now() - startTime;
+      
+      if (error.name === 'AbortError') {
+        console.error(`Yieldkit API timed out after ${errorTime}ms (15 second timeout reached)`);
+        return NextResponse.json({ 
+          error: 'Yieldkit API request took too long to respond, please try again later',
+          success: false,
+          programs: [] 
+        }, { status: 504 });
+      }
+      
+      throw error; // Re-throw other errors to be caught by the outer catch block
+    }
+    
+    // Start fetching program requests in parallel with processing the API response
+    const userProgramRequestsPromise = prisma.programRequest.findMany({
       where: {
         userId: user.id
+      },
+      // Only fetch the fields we need
+      select: {
+        programId: true,
+        status: true
       }
     });
+    
+    // Wait for the program requests to be fetched
+    const userProgramRequests = await userProgramRequestsPromise;
+    
+    console.log(`Found ${userProgramRequests.length} program requests for user`);
 
     // Map programs with join status
     const programsWithStatus = data.advertisers.map((program: any) => {
-      const request = userProgramRequests.find(req => req.programId === program.id);
+      const request = userProgramRequests.find((req: {programId: string, status: string}) => 
+        req.programId === program.id
+      );
       return {
         ...program,
         joinStatus: request ? request.status : null

@@ -28,7 +28,7 @@ export default function PublisherLayout({
               </h1>
             </div>
             <nav className="flex space-x-6">
-              {/* <Link 
+              <Link 
                 href="/dashboard" 
                 className={`${isActive('/dashboard') 
                   ? 'text-indigo-600 font-medium' 
@@ -36,7 +36,7 @@ export default function PublisherLayout({
                 }`}
               >
                 Dashboard
-              </Link> */}
+              </Link>
               <Link 
                 href="/programs" 
                 className={`${isActive('/programs') 

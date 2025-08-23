@@ -51,55 +51,64 @@ export async function POST(req: Request) {
         
         console.log("Created program with minimal information");
         
-        // Even though we created a minimal record, still try to fetch more details
-        // from the Yieldkit API to update our record with better information
+        // Make the API call non-blocking by not awaiting it
+        // This will run in the background and update the program details later
+        // without slowing down the user's join request
         const apiKey = process.env.API_KEY || '7d9190cbf12fe7bb14f1599e04ab57da';
         const apiSecret = process.env.API_SECRET || '64c067c1c1a01034238875b2beb7ee31';
         const apiUrl = `https://api.yieldkit.com/v1/advertiser?api_key=${apiKey}&api_secret=${apiSecret}&site_id=${user.siteId}&id=${programId}&format=json`;
         
-        console.log("Fetching program details from API:", apiUrl);
+        console.log("Scheduling background update of program details from API:", apiUrl);
         
-        const response = await fetch(apiUrl, {
-          headers: { 'accept': 'application/json' },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          
-          if (data.advertisers && data.advertisers.length > 0) {
-            // Look for the exact matching program by ID
-            const advertiser = data.advertisers.find((adv: any) => adv.id === programId) || data.advertisers[0];
-            
-            // Log which program we're using
-            console.log("Found program:", advertiser.id, advertiser.name);
-            
-            // Double check if this is the right program
-            if (advertiser.id !== programId) {
-              console.warn(`Warning: API returned program ${advertiser.id} but we requested ${programId}`);
-            }
-            
-            // Update the program with full details
-            await prisma.program.update({
-              where: { id: programId },
-              data: {
-                name: advertiser.name,
-                description: advertiser.description || '',
-                image: advertiser.image || '',
-                domain: advertiser.domain || '',
-                url: advertiser.url || '',
-                payPerLead: advertiser.payPerLead || 0,
-                payPerSale: advertiser.payPerSale || 0,
-                currency: advertiser.currency || 'EUR',
-                categories: advertiser.categories || [],
-                countries: advertiser.countries || [],
-              },
+        // Fire and forget - this runs asynchronously without blocking
+        (async () => {
+          try {
+            console.log("Background fetch started for program:", programId);
+            const response = await fetch(apiUrl, {
+              headers: { 'accept': 'application/json' },
             });
-            
-            console.log("Updated program with API details");
+    
+            if (response.ok) {
+              const data = await response.json();
+              
+              if (data.advertisers && data.advertisers.length > 0) {
+                // Look for the exact matching program by ID
+                const advertiser = data.advertisers.find((adv: any) => adv.id === programId) || data.advertisers[0];
+                
+                // Log which program we're using
+                console.log("Found program in background task:", advertiser.id, advertiser.name);
+                
+                // Double check if this is the right program
+                if (advertiser.id !== programId) {
+                  console.warn(`Warning: API returned program ${advertiser.id} but we requested ${programId}`);
+                }
+                
+                // Update the program with full details
+                await prisma.program.update({
+                  where: { id: programId },
+                  data: {
+                    name: advertiser.name,
+                    description: advertiser.description || '',
+                    image: advertiser.image || '',
+                    domain: advertiser.domain || '',
+                    url: advertiser.url || '',
+                    payPerLead: advertiser.payPerLead || 0,
+                    payPerSale: advertiser.payPerSale || 0,
+                    currency: advertiser.currency || 'EUR',
+                    categories: advertiser.categories || [],
+                    countries: advertiser.countries || [],
+                  },
+                });
+                
+                console.log("Updated program with API details in background task");
+              }
+            } else {
+              console.log("Background fetch failed for program details from API, keeping minimal record");
+            }
+          } catch (error) {
+            console.error("Error in background program update:", error);
           }
-        } else {
-          console.log("Failed to fetch program details from API, but continuing with minimal record");
-        }
+        })();
       } catch (error) {
         console.error("Error creating program:", error);
         return NextResponse.json({ error: 'Failed to create program record' }, { status: 500 });

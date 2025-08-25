@@ -35,32 +35,34 @@ export default function Programs() {
   const [notification, setNotification] = useState<{message: string; type: 'success' | 'error'} | null>(null);
   const [modalProgram, setModalProgram] = useState<Program | null>(null);
   const [joiningProgramId, setJoiningProgramId] = useState<string | null>(null);
+  // Search state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearchTerm(searchTerm), 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   useEffect(() => {
     if (!session) {
       return;
     }
-    
     fetchPrograms();
-  }, [session, selectedCategory, selectedCountry, page]);
+  }, [session, selectedCategory, selectedCountry, page, debouncedSearchTerm]);
 
   async function fetchPrograms() {
     try {
       setIsLoading(true);
       setError(null);
-      
+      const q = debouncedSearchTerm ? `&q=${encodeURIComponent(debouncedSearchTerm)}` : '';
       // Add country and pagination parameters
-      const response = await fetch(`/api/programs?page=${page}&pageSize=10&country=${selectedCountry}`);
-      
+      const response = await fetch(`/api/programs?page=${page}&pageSize=10&country=${selectedCountry}${q}`);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch programs');
       }
-      
       const data = await response.json();
-
-      console.log("😊 Fetched programs:", data);
-
       if (data && data.success && Array.isArray(data.programs)) {
         setPrograms(data.programs);
         // Calculate total pages based on total count and page size
@@ -200,6 +202,20 @@ export default function Programs() {
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Filter Programs</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
+              <label htmlFor="search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
+              <input
+                id="search"
+                type="text"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Search programs by name, domain, etc..."
+                value={searchTerm}
+                onChange={e => {
+                  setSearchTerm(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+            <div>
               <label htmlFor="country" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Country</label>
               <div className="relative">
                 <select
@@ -220,7 +236,6 @@ export default function Programs() {
                 </select>
               </div>
             </div>
-
             {categories.length > 0 && (
               <div>
                 <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>

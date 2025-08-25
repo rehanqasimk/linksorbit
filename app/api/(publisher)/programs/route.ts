@@ -12,9 +12,10 @@ export async function GET(req: Request) {
 
   try {
     const url = new URL(req.url);
-    const page = url.searchParams.get('page') || '1';
-    const pageSize = url.searchParams.get('pageSize') || '10';
-    let country = url.searchParams.get('country') || 'ALL';
+  const page = url.searchParams.get('page') || '1';
+  const pageSize = url.searchParams.get('pageSize') || '10';
+  let country = url.searchParams.get('country') || 'ALL';
+  const q = url.searchParams.get('q') || '';
 
     // Get user to retrieve their siteId
     const user = await prisma.user.findUnique({
@@ -32,10 +33,13 @@ export async function GET(req: Request) {
     // Make request to Yieldkit API
     // If country is 'ALL', don't include the country parameter
     let yieldkitUrl = `https://api.yieldkit.com/v1/advertiser?api_key=${apiKey}&api_secret=${apiSecret}&site_id=${user.siteId}&page_size=${pageSize}&page=${page}&format=json`;
-    
     // Only add country parameter if it's not 'ALL'
     if (country !== 'ALL') {
       yieldkitUrl += `&country=${country}`;
+    }
+    // Add search query if present
+    if (q) {
+      yieldkitUrl += `&q=${encodeURIComponent(q)}`;
     }
 
     console.log('Fetching from Yieldkit API:', yieldkitUrl);

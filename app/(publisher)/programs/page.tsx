@@ -272,7 +272,7 @@ export default function Programs() {
                 key={program.id} 
                 className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col sm:flex-row"
               >
-                <div className="w-full sm:w-48 h-48 sm:h-auto flex-shrink-0">
+                <a href={`/program/${program.id}`} className="w-full sm:w-48 h-48 sm:h-auto flex-shrink-0 focus:outline-none">
                   <div className="relative w-full h-full bg-gray-100 dark:bg-gray-700">
                     {program.image ? (
                       <SafeImage 
@@ -296,11 +296,15 @@ export default function Programs() {
                       />
                     )}
                   </div>
-                </div>
+                </a>
                 
                 <div className="p-6 flex-grow flex flex-col">
                   <div className="flex-grow">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{program.name}</h3>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                      <a href={`/program/${program.id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                        {program.name}
+                      </a>
+                    </h3>
                     <a href={`http://${program.domain}`} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
                       {program.domain}
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -331,6 +335,12 @@ export default function Programs() {
                           <span className="font-medium">Lead:</span> <span className="font-bold">{program.payPerLead} {program.currency}</span>
                         </div>
                       )}
+                      <a href={`/program/${program.id}`} className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium flex items-center">
+                        View Details
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </a>
                     </div>
                     
                     <div>

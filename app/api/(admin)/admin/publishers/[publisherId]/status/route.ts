@@ -6,7 +6,7 @@ import prisma from '@/lib/prisma';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { publisherId: string } }
+  context: { params: Promise<{ publisherId: string }> }
 ) {
   try {
     // Check if user is admin
@@ -16,6 +16,7 @@ export async function PATCH(
     }
 
     const { status } = await request.json();
+    const params = await context.params;
     const publisherId = params.publisherId;
 
     // Get the publisher's current status first

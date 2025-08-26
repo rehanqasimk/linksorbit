@@ -48,7 +48,7 @@ export const authOptions: AuthOptions = {
           name: user.name,
           role: user.role,
           status: user.status,
-          siteId: user.siteId,
+          siteId: user.siteId || undefined,
         };
       },
     }),

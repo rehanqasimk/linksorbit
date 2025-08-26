@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { publisherId: string } }
+  context: { params: Promise<{ publisherId: string }> }
 ) {
   try {
     // Check if user is admin
@@ -17,17 +17,18 @@ export async function PATCH(
     }
 
     const { siteId } = await request.json();
+    const params = await context.params;
     const publisherId = params.publisherId;
-    
+
     if (!siteId) {
       return NextResponse.json({ message: 'Site ID is required' }, { status: 400 });
     }
-    
+
     // Check if site ID is already assigned to another user
     const existingUser = await prisma.user.findUnique({
       where: { siteId },
     });
-    
+
     if (existingUser && existingUser.id !== publisherId) {
       return NextResponse.json(
         { message: 'Site ID is already assigned to another user' },

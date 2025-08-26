@@ -12,7 +12,7 @@ interface ProgramResponse {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get the authenticated session
@@ -25,7 +25,8 @@ export async function GET(
     }
 
     // Await the params object to avoid the NextJS warning
-    const { id } = await Promise.resolve(params);
+    const params = await context.params;
+    const { id } = params;
 
     // Check if ID is provided
     if (!id) {

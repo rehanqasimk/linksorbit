@@ -66,8 +66,6 @@ export async function GET(request: Request) {
       
       const data = await response.json();
       console.log(`API responded in ${Date.now() - startTime}ms`);
-
-      console.log("🟢 data",data);
       
       
       // Define interfaces for strong typing
@@ -113,7 +111,6 @@ export async function GET(request: Request) {
         }
       }
       
-      console.log("🔴 typedData",typedData);
       
       return NextResponse.json({
         success: true,

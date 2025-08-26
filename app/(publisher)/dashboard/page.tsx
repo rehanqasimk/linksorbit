@@ -77,9 +77,9 @@ export default function Dashboard() {
       </div>
       
       {/* Detailed Statistics */}
-      <div className="mb-8">
+      {/* <div className="mb-8">
         <DetailedStatistics startDate={startDate} endDate={endDate} />
-      </div>
+      </div> */}
       
       {/* Main Content */}
       {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

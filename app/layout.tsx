@@ -23,8 +23,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  console.log("jani");
-  
   return (
     <html lang="en">
       <body

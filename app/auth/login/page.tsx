@@ -27,24 +27,20 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError('Invalid email or password');
+        setError(result.error === 'Account pending approval' 
+          ? 'Your account is pending approval by an administrator.' 
+          : 'Invalid email or password');
+        setIsLoading(false);
         return;
       }
 
-      // Check user role from session
-      const session = await fetch('/api/auth/session');
-      const sessionData = await session.json();
-      
-      // Redirect based on role
-      if (sessionData?.user?.role === 'ADMIN') {
-        router.push('/admin');
-      } else {
-        router.push('/dashboard');
+      if (result?.ok) {
+        // Force a hard reload to the appropriate page based on the stored role
+        // This ensures the session is fully established before rendering protected routes
+        window.location.href = email.includes('admin') ? '/admin' : '/dashboard';
       }
-      router.refresh();
     } catch (error) {
       setError('An error occurred. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   }

@@ -6,6 +6,11 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
   const pathname = request.nextUrl.pathname;
   
+  // Add a short circuit for API routes - don't apply middleware to them
+  if (pathname.startsWith('/api')) {
+    return NextResponse.next();
+  }
+  
   // Handle authentication pages (login/register)
   if (pathname.startsWith('/auth')) {
     if (token) {
@@ -17,40 +22,35 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Require authentication for all other routes
-  if (!token) {
+  // Require authentication for protected routes
+  if (!token && 
+     (pathname === '/' || 
+      pathname.startsWith('/dashboard') || 
+      pathname.startsWith('/admin') ||
+      pathname.startsWith('/program'))) {
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
-  const role = (token as any).role;
-
   // Handle root path redirects
   if (pathname === '/') {
+    const role = token ? (token as any).role : null;
     const redirectUrl = role === 'ADMIN' ? '/admin' : '/dashboard';
     return NextResponse.redirect(new URL(redirectUrl, request.url));
   }
 
   // Protect admin routes
-  if (pathname.startsWith('/admin')) {
-    if (role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-  }
-
-  // Protect user routes from admin access
-  if (pathname.startsWith('/dashboard') && role === 'ADMIN') {
-    return NextResponse.redirect(new URL('/admin', request.url));
-  }
-
-  // Protect admin routes
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
-    }
-    
+  if (pathname.startsWith('/admin') && token) {
     const role = (token as any).role;
     if (role !== 'ADMIN') {
       return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+  }
+
+  // Protect publisher routes from admin access
+  if (pathname.startsWith('/dashboard') && token) {
+    const role = (token as any).role;
+    if (role === 'ADMIN') {
+      return NextResponse.redirect(new URL('/admin', request.url));
     }
   }
 
@@ -62,10 +62,11 @@ export const config = {
   matcher: [
     '/',
     '/dashboard/:path*',
+    '/admin/:path*',
     '/auth/:path*',
-    '/merchants/:path*',
+    '/program/:path*',
+    '/programs/:path*',
     '/reports/:path*',
-    '/payments/:path*',
-    '/account/:path*',
+    '/incentives/:path*',
   ],
 };

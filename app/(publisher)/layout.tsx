@@ -46,16 +46,18 @@ export default function PublisherLayout({
               >
                 Programs
               </Link>
-              {/* <Link 
+              <Link 
                 href="/reports" 
                 className={`${isActive('/reports') 
                   ? 'text-indigo-600 font-medium' 
                   : 'text-gray-600 hover:text-indigo-600'
                 }`}
               >
-                Reports
+                Reporting
               </Link>
-              <Link 
+              
+               {/*
+               <Link 
                 href="/incentives" 
                 className={`${isActive('/incentives') 
                   ? 'text-indigo-600 font-medium' 

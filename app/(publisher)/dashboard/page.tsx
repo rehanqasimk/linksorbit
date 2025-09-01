@@ -11,6 +11,7 @@ import WeeklyPerformance from '@/components/dashboard/WeeklyPerformance';
 import ProgramReport from '@/components/dashboard/ProgramReport';
 import MetricsCards from '@/components/dashboard/MetricsCards';
 import DetailedStatistics from '@/components/dashboard/DetailedStatistics';
+import CurrentBalance from '@/components/dashboard/CurrentBalance';
 
 export default function Dashboard() {
   const { data: session, status } = useSession({ required: true });
@@ -74,6 +75,11 @@ export default function Dashboard() {
       {/* Metrics Cards */}
       <div className="mb-8">
         <MetricsCards startDate={startDate} endDate={endDate} />
+      </div>
+      
+      {/* Current Balance */}
+      <div className="mb-8">
+        <CurrentBalance />
       </div>
       
       {/* Detailed Statistics */}

@@ -38,8 +38,15 @@ export default function DetailedStatistics({ startDate, endDate }: { startDate?:
     async function fetchUserSiteId() {
       try {
         const response = await fetch('/api/user/profile');
+
+
+
+  
+        
         if (response.ok) {
           const data = await response.json();
+
+          console.log("data",data);
           if (data.user && data.user.siteId) {
             setUserSiteId(data.user.siteId);
           }
@@ -67,6 +74,7 @@ export default function DetailedStatistics({ startDate, endDate }: { startDate?:
         }
         
         const data = await response.json();
+        console.log("🔴 detailed statistics data", data);
         setStats(data);
         setUserSiteId(data.siteId);
       } catch (err) {

@@ -184,7 +184,7 @@ const TopMerchants = () => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
       <div className="px-6 py-4 bg-gray-50 dark:bg-gray-750 border-b dark:border-gray-700 flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Your Top Merchants</h2>
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-400 ">Your Top Merchants</h2>
         <Link href="/programs" className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center">
           View All Programs
           <ExternalLink className="h-3.5 w-3.5 ml-1" />
@@ -222,7 +222,7 @@ const TopMerchants = () => {
                 merchants.map((merchant) => (
                   <tr 
                     key={merchant.merchantId} 
-                    className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750"
+                    className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                   >
                     <td className="px-6 py-4 text-center font-medium">
                       <div className={`
@@ -249,7 +249,7 @@ const TopMerchants = () => {
                     <td className="px-6 py-4 text-center">
                       <button 
                         onClick={() => openTrackingLinkModal(merchant)}
-                        className="inline-block px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded hover:bg-indigo-100 dark:text-indigo-400 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30 transition-colors"
+                        className="inline-block px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded hover:bg-indigo-100 hover:text-indigo-700 dark:text-indigo-400 dark:bg-indigo-900/20 dark:hover:bg-indigo-800/30 dark:hover:text-indigo-300 transition-colors"
                       >
                         Get Links
                       </button>

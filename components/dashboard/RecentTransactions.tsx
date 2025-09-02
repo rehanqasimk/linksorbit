@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -108,9 +107,9 @@ const RecentTransactions = () => {
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
       <div className="px-6 py-4 bg-gray-50 dark:bg-gray-750 border-b dark:border-gray-700 flex justify-between items-center">
         <h2 className="text-lg font-semibold text-gray-500 dark:text-gray-400">Recent Transactions</h2>
-        <Link href="/reports" className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center">
+        <Link href="/reports" className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center transition-colors duration-150 hover:underline">
           View All
-          <ExternalLink className="h-3.5 w-3.5 ml-1" />
+          <ExternalLink className="h-3.5 w-3.5 ml-1 transition-transform duration-150 group-hover:translate-x-0.5" />
         </Link>
       </div>
       
@@ -143,7 +142,7 @@ const RecentTransactions = () => {
                 transactions.map((transaction) => (
                   <tr 
                     key={transaction.id} 
-                    className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750"
+                    className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer"
                   >
                     <td className="px-6 py-4">
                       {formatCurrency(transaction.amount, transaction.currency)} 

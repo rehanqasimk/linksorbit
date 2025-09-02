@@ -12,6 +12,8 @@ import ProgramReport from '@/components/dashboard/ProgramReport';
 import MetricsCards from '@/components/dashboard/MetricsCards';
 import DetailedStatistics from '@/components/dashboard/DetailedStatistics';
 import CurrentBalance from '@/components/dashboard/CurrentBalance';
+import RecentTransactions from '@/components/dashboard/RecentTransactions';
+import TopMerchants from '@/components/dashboard/TopMerchants';
 
 export default function Dashboard() {
   const { data: session, status } = useSession({ required: true });
@@ -85,6 +87,16 @@ export default function Dashboard() {
       {/* Detailed Statistics */}
       <div className="mb-8">
         <DetailedStatistics startDate={startDate} endDate={endDate} />
+      </div>
+      
+      {/* Recent Transactions */}
+      <div className="mb-8">
+        <RecentTransactions />
+      </div>
+      
+      {/* Top Merchants */}
+      <div className="mb-8">
+        <TopMerchants />
       </div>
       
       {/* Main Content */}
